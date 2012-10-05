@@ -99,7 +99,7 @@ define(['juration'], function(juration) {
         this.durationFrom = function(startTime)
         {
           var tsdif = ts - startTime.getTs();
-          return juration.stringify(Math.abs(tsdif));
+          return ((tsdif>0)?'':'- ')+juration.stringify(Math.abs(tsdif));
         }
         
         this.format = function(f){
@@ -111,7 +111,7 @@ define(['juration'], function(juration) {
             case undefined: f = "d-m-Y"; break;
             case 'date': f = "d-m-Y"; break;
             case 'time': f = 'h:i'; break;
-            case 'datetime': f = "D d-M-y H:i h:i A"; break;
+            case 'datetime': f = "d-M-y h:i a"; break;
           }
 
           var r = "";
