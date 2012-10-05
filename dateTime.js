@@ -31,100 +31,105 @@ define(['juration'], function(juration) {
     var datetime = function(input)
      {
         var pri = {};
-        var ts = undefined;
-        var tz = undefined;
+        pri.ts = undefined;
+        pri.tz = undefined;
         if (input instanceof Object)
         {
-          ts = input.ts;
-          tz = input.tz;
+          pri.ts = input.ts;
+          pri.tz = input.tz;
         }else{
-          ts = input;
-          tz = 0;
+          pri.ts = input;
+          pri.tz = 0;
           var dObj = new Date();
-          tz = dObj.getTimezoneOffset() * 60;
+          pri.tz = dObj.getTimezoneOffset() * 60;
         }
 
-        if (ts === undefined)
+        if (pri.ts === undefined)
         {
           if (dObj === undefined)
           {
             var dObj = new Date();
           }
-          ts = dObj.getTime();
+          var ts = dObj.getTime();
           ts -= dObj.getTimezoneOffset() * 60;
-          ts = Math.floor(ts/1000);
+          pri.ts = Math.floor(ts/1000);
         }
 
-        this.tz = tz;
-        this.ts = ts;
-        
-        this.dateObject = 0;
 
-        var ro = this;
+        
+        pri.dateObject = 0;
         
         this.getJSON = function(){
           return {
-            ts: this.ts,
-            tz: this.tz   
+            ts: pri.ts,
+            tz: pri.tz   
           };
         }; 
         
-        this.display = function(){
-          return this.ts;
-        };
-        
         this.getJsTs = function(){
-          return this.ts * 1000;
+          return pri.ts * 1000;
         }
         this.setJsTs = function(newJsTs){
           this.dateObject = 0;
-          this.ts = newJsTs/1000;
+          pri.ts = newJsTs/1000;
         }
         this.setTs = function(newTs)
         {
-          this.dateObject = 0;
-          this.ts = newTs;
+          pri.dateObject = 0;
+          pri.ts = newTs;
+          // PUBLISH
         }
         this.getTs = function()
         {
-          return this.ts;
+          return pri.ts/1;
+        }
+        this.getTz = function()
+        {
+          return pri.tz/1;
         }
         
         pri.obj = function(){
-          if (ro.dateObject == 0)
+          if (pri.dateObject == 0)
           {
-            ro.dateObject = new Date((ro.ts*1000)+(ro.tz*1000));
+            pri.dateObject = new Date((pri.ts*1000)+(pri.tz*1000));
           }
-          return ro.dateObject;
+          return pri.dateObject;
         };
         
+        this.setTimePortionFrom = function(timePortion)
+        {
+          this.setTs(this.getDate().getTs() + timePortion.getTime().getTs() + pri.tz);
+        }
+
+        this.setDatePortionFrom = function(datePortion)
+        {
+          this.setTs(this.getTime().getTs() + datePortion.getDate().getTs() + pri.tz);
+        }
+
         this.durationFrom = function(startTime)
         {
-          var tsdif = ts - startTime.getTs();
+          var tsdif = pri.ts - startTime.getTs();
           return ((tsdif>0)?'':'- ')+juration.stringify(Math.abs(tsdif));
         }
         
-        pri.tsDate = function()
-        {
-
+        this.clone = function(){
+          var sn = {tz: pri.tz, ts: pri.ts};
+          return new datetime(sn);
         }
 
         this.getDate = function(){
-          var sn = {tz: this.tz, ts: 0};
-          sn.ts = (Math.floor((this.ts/1 + this.tz/1) / (60*60*24)) * (60*60*24)) - this.tz;
+          var sn = {tz: pri.tz, ts: 0};
+          sn.ts = (Math.floor((pri.ts/1 + pri.tz/1) / (60*60*24)) * (60*60*24)) - pri.tz;
           return new datetime(sn);
         };
 
         this.getTime = function(){
-          var sn = {tz: this.tz, ts: 0};
-          sn.ts = ((this.ts/1 + this.tz/1) % (60*60*24)) - this.tz;
+          var sn = {tz: pri.tz, ts: 0};
+          sn.ts = ((pri.ts/1 + pri.tz/1) % (60*60*24)) - pri.tz;
           return new datetime(sn);
         };
 
         this.format = function(f){
-         // console.log(pri.obj());
-        //  this.dateObject = new Date(this.jsts);
-        //  return pri.obj() + this.jsts;
           switch (f)
           {
             case undefined: f = "d-m-Y"; break;
@@ -149,7 +154,7 @@ define(['juration'], function(juration) {
           {
         // Day
             // Day of the month, 2 digits with leading zeros
-            case "d": return this.leadingzero(pri.obj().getUTCDate());
+            case "d": return pri.leadingzero(pri.obj().getUTCDate());
 
             // A textual representation of a day, three letters
             case "D": return EnumDaysOfTheWeek[pri.obj().getUTCDay()][0];
@@ -166,7 +171,7 @@ define(['juration'], function(juration) {
 
             // English ordinal suffix for the day of the month, 2 characters
             // st, nd, rd or th. Works well with j
-            case "S": return '';
+            case "S": switch(pri.obj().getUTCDate()) {case 1: return 'st'; case 2: return "nd"; case 3: return "rd";} return "th";
 
             // Numeric representation of the day of the week
             // 0 (for Sunday) through 6 (for Saturday)
@@ -234,16 +239,16 @@ define(['juration'], function(juration) {
             //h 12-hour format of an hour with leading zeros  01 through 12
             case "h": 
               var h = pri.obj().getUTCHours() % 12;
-              return this.leadingzero((h==0)?12:h);
+              return pri.leadingzero((h==0)?12:h);
 
             //H 24-hour format of an hour with leading zeros  00 through 23
-            case "H": return this.leadingzero(pri.obj().getUTCHours());
+            case "H": return pri.leadingzero(pri.obj().getUTCHours());
 
             //i Minutes with leading zeros  00 to 59
-            case "i": return this.leadingzero(pri.obj().getUTCMinutes());
+            case "i": return pri.leadingzero(pri.obj().getUTCMinutes());
 
             //s Seconds, with leading zeros 00 through 59
-            case "s": return this.leadingzero(pri.obj().getUTCSeconds());
+            case "s": return pri.leadingzero(pri.obj().getUTCSeconds());
 
             //u  Microseconds (added in PHP 5.2.2). Note that date() will always generate 000000 since it takes an integer parameter, whereas DateTime::format() does support microseconds.
             case "u": return 0;
@@ -252,7 +257,7 @@ define(['juration'], function(juration) {
           }
           return n;
         };
-        this.leadingzero = function(v){
+        pri.leadingzero = function(v){
           v = v + "";
           while(v.length < 2)
           {
